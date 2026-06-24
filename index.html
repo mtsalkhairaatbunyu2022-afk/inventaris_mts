@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SIMADRA - Administrasi Inventaris Madrasah</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="shortcut icon" href="/icon-512.jpg" type="image/jpeg" />
+    <link rel="apple-touch-icon" href="/icon-512.jpg" />
+    <script>
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('ServiceWorker registered:', reg.scope))
+            .catch(err => console.error('ServiceWorker registration failed:', err));
+        });
+      }
+    </script>
+    <script>
+      // Sembunyikan atau nonaktifkan koneksi websocket hmr lokal agar tidak terjadi pesan galat di konsol browser
+      (function() {
+        const OriginalWebSocket = window.WebSocket;
+        if (OriginalWebSocket) {
+          const CustomWebSocket = function(url, protocols) {
+            if (typeof url === 'string' && (url.includes('localhost') || url.includes('127.0.0.1') || url.includes('run.app'))) {
+              return {
+                url: url,
+                readyState: 3, // CLOSED
+                bufferedAmount: 0,
+                extensions: "",
+                protocol: "",
+                binaryType: "blob",
+                onopen: null,
+                onerror: null,
+                onclose: null,
+                onmessage: null,
+                addEventListener: function() {},
+                removeEventListener: function() {},
+                dispatchEvent: function() { return true; },
+                send: function() {},
+                close: function() {}
+              };
+            }
+            return new OriginalWebSocket(url, protocols);
+          };
+          CustomWebSocket.prototype = OriginalWebSocket.prototype;
+          window.WebSocket = CustomWebSocket;
+        }
+
+        // Tangkap dan sembunyikan 'Script error.' siluman dari ekstensi/iframe silang-asal (CORS) agar tidak mengganggu
+        window.addEventListener('error', function(e) {
+          if (e.message === 'Script error.' || !e.filename) {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.onerror = function(message, source, lineno, colno, error) {
+          if (message === 'Script error.' || !source) {
+            return true; // Mencegah browser menampilkan pesan galat ini di konsol/dialog runtime
+          }
+          return false;
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

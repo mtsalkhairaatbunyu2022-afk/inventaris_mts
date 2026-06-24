@@ -1,0 +1,6 @@
+{
+  "name": "Inventaris Madrasah",
+  "description": "Aplikasi pengelolaan inventaris madrasah dengan pelaporan mutasi berkala, pemindaian gambar lewat kamera, serta ekspor file Word, Excel, dan PDF.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
