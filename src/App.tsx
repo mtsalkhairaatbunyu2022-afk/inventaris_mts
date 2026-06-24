@@ -49,10 +49,23 @@ export default function App() {
 
   // Capture the browser PWA invite prompt
   useEffect(() => {
-    // Detect standalone display mode
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-      setIsAppInstalled(true);
-    }
+    // Detect standalone display mode robustly
+    const checkStandalone = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                          (window.navigator as any).standalone === true ||
+                          document.referrer.includes('android-app://');
+      setIsAppInstalled(isStandalone);
+    };
+
+    checkStandalone();
+    
+    // Also listen for media query changes (e.g. if user installs while app is open)
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setIsAppInstalled(true);
+    };
+    
+    mediaQuery.addEventListener('change', handleMediaChange);
 
     const handleBeforePrompt = (e: Event) => {
       e.preventDefault();
@@ -72,6 +85,7 @@ export default function App() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforePrompt);
       window.removeEventListener('appinstalled', handleAppInstalledFinished);
+      mediaQuery.removeEventListener('change', handleMediaChange);
     };
   }, []);
 
@@ -187,6 +201,7 @@ export default function App() {
         nomor: maxNomor + 1,
         namaBarang: itemData.namaBarang,
         kategori: itemData.kategori,
+        sumberDana: itemData.sumberDana,
         jumlah: itemData.jumlah,
         kondisi: itemData.kondisi,
         tanggalMutasi: itemData.tanggalMutasi,
@@ -329,10 +344,21 @@ export default function App() {
             </div>
           </div>
 
-          {/* Quick Offline Status Indication */}
-          <div className="flex items-center gap-2 bg-emerald-900/40 border border-emerald-700/50 px-3 py-1.5 rounded-xl font-sans text-[11px] font-semibold text-emerald-200">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            Penyimpanan Lokal Aktif
+          {/* Quick Offline Status & Install Trigger */}
+          <div className="flex items-center gap-3">
+            {!isAppInstalled && (
+              <button
+                onClick={handlePWAInstallTrigger}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl font-sans text-[11px] font-bold text-white transition active:scale-95 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Instal Aplikasi
+              </button>
+            )}
+            <div className="flex items-center gap-2 bg-emerald-900/40 border border-emerald-700/50 px-3 py-1.5 rounded-xl font-sans text-[11px] font-semibold text-emerald-200">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              Penyimpanan Lokal Aktif
+            </div>
           </div>
 
         </div>
